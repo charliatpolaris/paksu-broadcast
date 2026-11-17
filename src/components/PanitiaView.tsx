@@ -399,13 +399,13 @@ export default function PanitiaView({
       {/* Filter & Search */}
       <div className="space-y-3 mb-5">
         <div className="relative">
-          <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+          <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
           <input
             type="text"
             value={searchContact}
             onChange={(e) => setSearchContact(e.target.value)}
             placeholder="Cari nama jemaat atau nomor HP..."
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-400 shadow-xs"
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-base sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-400 shadow-xs"
           />
         </div>
 
@@ -488,28 +488,28 @@ export default function PanitiaView({
                 {/* Header: Name, No Urut, Phone & Status Dropdown */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-100">
                   <div className="flex items-center space-x-3">
-                    <div className="w-7 h-7 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-xs font-mono font-bold text-slate-600">
+                    <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-xs font-mono font-bold text-slate-700 shrink-0">
                       {contact.no_urut || idx + 1}
                     </div>
-                    <div>
-                      <h3 className="font-bold text-slate-900 text-sm sm:text-base leading-tight">
+                    <div className="min-w-0">
+                      <h3 className="font-bold text-slate-900 text-base leading-tight truncate">
                         {contact.recipient_name}
                       </h3>
-                      <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-500">
-                        <Phone className="w-3 h-3 text-slate-400" />
-                        <span className="font-mono text-slate-700">
+                      <div className="flex items-center gap-1.5 mt-0.5 text-xs text-slate-500">
+                        <Phone className="w-3 h-3 text-slate-400 shrink-0" />
+                        <span className="font-mono text-slate-700 font-medium">
                           {contact.phone_clean ? `+${contact.phone_clean}` : '(Nomor kosong)'}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Status Dropdown */}
-                  <div>
+                  {/* Status Dropdown - Full width on mobile for thumb friendliness */}
+                  <div className="w-full sm:w-auto">
                     <select
                       value={contact.status}
                       onChange={(e) => updateStatus(contact.recipient_id, e.target.value, contact.notes)}
-                      className={`text-xs font-semibold rounded-lg px-2.5 py-1.5 border focus:outline-none transition cursor-pointer ${
+                      className={`w-full sm:w-auto text-xs font-semibold rounded-xl px-3 py-2 sm:py-1.5 border focus:outline-none transition cursor-pointer shadow-2xs ${
                         contact.status === 'Konfirmasi Hadir'
                           ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
                           : contact.status === 'Konfirmasi Tidak Bisa Hadir'
@@ -531,32 +531,34 @@ export default function PanitiaView({
                 </div>
 
                 {/* Primary Action Buttons: WhatsApp & Copy */}
-                <div className="py-3 flex flex-wrap items-center gap-2">
+                <div className="py-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                   <button
                     onClick={() => handleSendWhatsApp(contact)}
                     disabled={!contact.phone_clean}
-                    className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-medium text-xs shadow-xs transition"
+                    className="w-full sm:flex-initial flex items-center justify-center gap-2 py-3 sm:py-2 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] disabled:opacity-50 text-white font-bold text-sm shadow-sm transition"
                   >
-                    <Send className="w-3.5 h-3.5" />
+                    <Send className="w-4 h-4" />
                     <span>Kirim Pesan WhatsApp</span>
                   </button>
 
-                  <button
-                    onClick={() => handleCopyMessage(contact)}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-medium border border-slate-200 transition"
-                  >
-                    {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
-                    <span>{isCopied ? 'Tersalin' : 'Salin Pesan'}</span>
-                  </button>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <button
+                      onClick={() => handleCopyMessage(contact)}
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 py-2.5 sm:py-2 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200 transition"
+                    >
+                      {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
+                      <span>{isCopied ? 'Tersalin' : 'Salin Pesan'}</span>
+                    </button>
 
-                  <button
-                    onClick={() => setExpandedMessageId(isExpanded ? null : contact.recipient_id)}
-                    className="flex items-center justify-center gap-1 px-2.5 py-2 rounded-xl text-slate-500 hover:text-slate-800 text-xs transition"
-                  >
-                    <MessageSquare className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{isExpanded ? 'Tutup' : 'Lihat Teks'}</span>
-                    {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                  </button>
+                    <button
+                      onClick={() => setExpandedMessageId(isExpanded ? null : contact.recipient_id)}
+                      className="flex-1 sm:flex-initial flex items-center justify-center gap-1 py-2.5 sm:py-2 px-3 rounded-xl text-slate-600 hover:text-slate-800 bg-slate-50 sm:bg-transparent border sm:border-0 border-slate-200 text-xs font-medium transition"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5 text-slate-400" />
+                      <span>{isExpanded ? 'Tutup' : 'Lihat Teks'}</span>
+                      {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Message preview accordion */}
@@ -583,8 +585,8 @@ export default function PanitiaView({
                         handleUpdateNotes(contact.recipient_id, contact.status, e.target.value);
                       }
                     }}
-                    placeholder="Tulis keterangan... (misal: 'Hadir bawa anak', 'Sedang dinas luar kota', 'Nomor ganti')"
-                    className="w-full px-3 py-1.5 bg-slate-50/70 border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-400 focus:bg-white"
+                    placeholder="Tulis keterangan... (misal: 'Hadir bawa anak', 'Sedang dinas luar kota')"
+                    className="w-full px-3 py-2 bg-slate-50/70 border border-slate-200 rounded-xl text-base sm:text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-slate-400 focus:bg-white"
                   />
                 </div>
               </div>

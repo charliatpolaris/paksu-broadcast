@@ -20,6 +20,7 @@ export default function TemplateView() {
   const [currentTitle, setCurrentTitle] = useState<string>('');
   const [currentDate, setCurrentDate] = useState<string>('');
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [mobileTab, setMobileTab] = useState<'editor' | 'preview'>('editor');
 
   useEffect(() => {
     fetchWaves();
@@ -137,17 +138,43 @@ export default function TemplateView() {
         </div>
       </div>
 
+      {/* Mobile Switcher (Editor vs Simulator) */}
+      <div className="lg:hidden flex bg-slate-100 p-1 rounded-xl">
+        <button
+          onClick={() => setMobileTab('editor')}
+          className={`flex-1 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+            mobileTab === 'editor'
+              ? 'bg-white text-slate-900 shadow-xs'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <FileText className="w-3.5 h-3.5" />
+          <span>Edit Template</span>
+        </button>
+        <button
+          onClick={() => setMobileTab('preview')}
+          className={`flex-1 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+            mobileTab === 'preview'
+              ? 'bg-white text-slate-900 shadow-xs'
+              : 'text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Smartphone className="w-3.5 h-3.5" />
+          <span>Pratinjau WhatsApp</span>
+        </button>
+      </div>
+
       {/* Editor & Simulator */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left: Editor (7 cols) */}
-        <div className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-xs">
+        <div className={`lg:col-span-7 bg-white border border-slate-200 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs ${mobileTab === 'editor' ? 'block' : 'hidden lg:block'}`}>
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Judul Broadcast</label>
             <input
               type="text"
               value={currentTitle}
               onChange={(e) => setCurrentTitle(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-400 focus:bg-white"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-base sm:text-sm text-slate-900 focus:outline-none focus:border-slate-400 focus:bg-white"
             />
           </div>
 
@@ -157,7 +184,7 @@ export default function TemplateView() {
               type="text"
               value={currentDate}
               onChange={(e) => setCurrentDate(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:border-slate-400 focus:bg-white"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-base sm:text-sm text-slate-900 focus:outline-none focus:border-slate-400 focus:bg-white"
             />
           </div>
 
@@ -186,16 +213,16 @@ export default function TemplateView() {
             </div>
 
             <textarea
-              rows={16}
+              rows={14}
               value={currentTemplate}
               onChange={(e) => setCurrentTemplate(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs sm:text-sm text-slate-900 focus:outline-none focus:border-slate-400 focus:bg-white font-mono leading-relaxed"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-base sm:text-sm text-slate-900 focus:outline-none focus:border-slate-400 focus:bg-white font-mono leading-relaxed"
             />
           </div>
         </div>
 
         {/* Right: Simulator (5 cols) */}
-        <div className="lg:col-span-5 flex flex-col items-center">
+        <div className={`lg:col-span-5 flex flex-col items-center ${mobileTab === 'preview' ? 'block' : 'hidden lg:flex'}`}>
           <div className="w-full max-w-sm bg-slate-100 rounded-[32px] p-3 border-4 border-slate-300 shadow-xl">
             {/* Phone Notch */}
             <div className="flex justify-center mb-2">

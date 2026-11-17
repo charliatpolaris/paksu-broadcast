@@ -74,7 +74,7 @@ export default function Home() {
       />
 
       {/* Main View - Persistent Mounting for 0ms Smooth Tab Switching */}
-      <main className="flex-1 pb-16">
+      <main className="flex-1 pb-24 md:pb-16">
         <div className={activeTab === 'dashboard' ? 'block animate-fade-in' : 'hidden'}>
           <DashboardView
             signedInPanitia={signedInPanitia}
@@ -114,7 +114,7 @@ export default function Home() {
       <FlyerModal isOpen={isFlyerOpen} onClose={() => setIsFlyerOpen(false)} />
 
       {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-400">
+      <footer className="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-400 mb-14 md:mb-0">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center space-x-2 text-slate-600">
             <span className="font-semibold">Yayasan PAKSU</span>

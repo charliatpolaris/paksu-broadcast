@@ -29,7 +29,7 @@ export default function FlyerModal({ isOpen, onClose }: FlyerModalProps) {
         </div>
 
         {/* Content */}
-        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[80vh] overflow-y-auto">
+        <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 max-h-[80vh] overflow-y-auto">
           {/* Left: Flyer Image */}
           <div className="flex flex-col items-center justify-center bg-slate-50 p-4 rounded-xl border border-slate-200">
             <img

@@ -325,16 +325,110 @@ export default function RecipientsView({ signedInPanitia, onOpenSignIn }: Recipi
                   setPage(1);
                 }}
                 placeholder="Nama atau no HP..."
-                className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-slate-400 placeholder-slate-400"
+                className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-base sm:text-xs text-slate-800 focus:outline-none focus:border-slate-400 placeholder-slate-400"
               />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Table */}
+      {/* Table & Mobile Cards Container */}
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
-        <div className="overflow-x-auto">
+        {/* Mobile Cards (Phones - Block on Mobile, Hidden on Tablet/Desktop) */}
+        <div className={`md:hidden divide-y divide-slate-100 transition-opacity duration-200 ${loading ? 'opacity-60 pointer-events-none' : 'opacity-100'}`}>
+          {loading && contacts.length === 0 ? (
+            <div className="text-center py-12 text-slate-400 text-xs">
+              <RefreshCw className="w-4 h-4 animate-spin mx-auto mb-1 text-slate-600" />
+              Memuat data jemaat...
+            </div>
+          ) : contacts.length === 0 ? (
+            <div className="text-center py-12 text-slate-400 text-xs">
+              Tidak ada jemaat yang cocok.
+            </div>
+          ) : (
+            contacts.map((contact, idx) => {
+              return (
+                <div key={contact.id} className="p-3.5 space-y-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-bold text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">
+                        #{contact.no_urut || ((page - 1) * 30 + idx + 1)}
+                      </span>
+                      <div className="font-bold text-slate-900 text-sm leading-tight">
+                        {contact.name}
+                      </div>
+                    </div>
+
+                    {contact.phone_clean ? (
+                      <a
+                        href={`https://wa.me/${contact.phone_clean}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-mono font-medium flex items-center gap-1 shrink-0"
+                      >
+                        <Phone className="w-3 h-3 text-emerald-600" />
+                        <span>+{contact.phone_clean}</span>
+                      </a>
+                    ) : (
+                      <span className="text-xs text-slate-400 italic">No HP kosong</span>
+                    )}
+                  </div>
+
+                  {/* PIC & Status in 2 columns on mobile */}
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase block mb-0.5">PIC Panitia</span>
+                      <select
+                        value={contact.assigned_committee_id || ''}
+                        onChange={(e) => handleReassign(contact.id, e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs text-slate-800 focus:outline-none"
+                      >
+                        <option value="">Belum Ditugaskan</option>
+                        {panitiaList.map((p) => (
+                          <option key={p.id} value={p.id.toString()}>
+                            {p.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase block mb-0.5">Status Wave {selectedWave}</span>
+                      <select
+                        value={contact.status}
+                        onChange={(e) => handleUpdateStatus(contact, e.target.value)}
+                        className={`w-full text-xs font-semibold rounded-lg px-2 py-1.5 border focus:outline-none ${
+                          contact.status === 'Konfirmasi Hadir'
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                            : contact.status === 'Konfirmasi Tidak Bisa Hadir'
+                            ? 'bg-rose-50 text-rose-800 border-rose-300'
+                            : contact.status === 'Terkirim Tidak Ada Respond'
+                            ? 'bg-amber-50 text-amber-800 border-amber-300'
+                            : 'bg-slate-50 text-slate-700 border-slate-200'
+                        }`}
+                      >
+                        <option value="Belum Terkirim">⚪ Belum</option>
+                        <option value="Terkirim Tidak Ada Respond">🟡 Terkirim</option>
+                        <option value="Konfirmasi Hadir">🟢 Hadir</option>
+                        <option value="Konfirmasi Tidak Bisa Hadir">🔴 Tdk Hadir</option>
+                        <option value="Tidak Terkirim">⛔ Gagal</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {contact.notes && (
+                    <div className="text-[11px] text-slate-600 bg-slate-50 p-2 rounded-lg border border-slate-100 italic">
+                      Catatan: {contact.notes}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop Table (Hidden on Mobile) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-500 uppercase font-semibold border-b border-slate-200">
               <tr>

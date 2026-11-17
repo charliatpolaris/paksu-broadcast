@@ -218,7 +218,7 @@ export default function SignInModal({ isOpen, onClose, onSignIn }: SignInModalPr
                   if (errorMessage) setErrorMessage(null);
                 }}
                 placeholder="Contoh: Charlie, Novan, Vena, Della..."
-                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-400 focus:bg-white transition"
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-base sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-400 focus:bg-white transition"
               />
             </div>
             <p className="text-[11px] text-slate-400 mt-1.5">
