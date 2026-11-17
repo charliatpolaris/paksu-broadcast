@@ -7,6 +7,10 @@
   --foreground: #0f172a;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   color: #0f172a;
   background-color: #f8fafc;
@@ -29,4 +33,20 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+/* Smooth fade in animation */
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeInScale 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

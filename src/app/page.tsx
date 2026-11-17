@@ -73,32 +73,34 @@ export default function Home() {
         onOpenFlyer={() => setIsFlyerOpen(true)}
       />
 
-      {/* Main View */}
+      {/* Main View - Persistent Mounting for 0ms Smooth Tab Switching */}
       <main className="flex-1 pb-16">
-        {activeTab === 'dashboard' && (
+        <div className={activeTab === 'dashboard' ? 'block animate-fade-in' : 'hidden'}>
           <DashboardView
             signedInPanitia={signedInPanitia}
             onSelectPanitia={handleSelectPanitiaFromDashboard}
             onOpenFlyer={() => setIsFlyerOpen(true)}
           />
-        )}
+        </div>
 
-        {activeTab === 'panitia' && (
+        <div className={activeTab === 'panitia' ? 'block animate-fade-in' : 'hidden'}>
           <PanitiaView
             signedInPanitia={signedInPanitia}
             onOpenSignIn={() => setIsSignInOpen(true)}
             onOpenFlyer={() => setIsFlyerOpen(true)}
           />
-        )}
+        </div>
 
-        {activeTab === 'recipients' && (
+        <div className={activeTab === 'recipients' ? 'block animate-fade-in' : 'hidden'}>
           <RecipientsView
             signedInPanitia={signedInPanitia}
             onOpenSignIn={() => setIsSignInOpen(true)}
           />
-        )}
+        </div>
 
-        {activeTab === 'templates' && <TemplateView />}
+        <div className={activeTab === 'templates' ? 'block animate-fade-in' : 'hidden'}>
+          <TemplateView />
+        </div>
       </main>
 
       {/* Sign In Modal */}

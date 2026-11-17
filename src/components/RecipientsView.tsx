@@ -35,6 +35,7 @@ export default function RecipientsView({ signedInPanitia, onOpenSignIn }: Recipi
 
   // Filters
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedPanitia, setSelectedPanitia] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedWave, setSelectedWave] = useState(1);
@@ -50,9 +51,17 @@ export default function RecipientsView({ signedInPanitia, onOpenSignIn }: Recipi
     fetchPanitiaList();
   }, []);
 
+  // Debounce search input by 280ms to prevent stuttering & API spamming
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 280);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   useEffect(() => {
     fetchContacts();
-  }, [page, search, selectedPanitia, selectedStatus, selectedWave]);
+  }, [page, debouncedSearch, selectedPanitia, selectedStatus, selectedWave]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -77,7 +86,7 @@ export default function RecipientsView({ signedInPanitia, onOpenSignIn }: Recipi
       const params = new URLSearchParams({
         page: page.toString(),
         limit: '30',
-        search,
+        search: debouncedSearch,
         panitiaId: selectedPanitia,
         status: selectedStatus,
         wave: selectedWave.toString()
@@ -337,8 +346,8 @@ export default function RecipientsView({ signedInPanitia, onOpenSignIn }: Recipi
                 <th className="px-4 py-3">Catatan Respon</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700">
-              {loading ? (
+            <tbody className={`divide-y divide-slate-100 text-slate-700 transition-opacity duration-200 ${loading ? 'opacity-60 pointer-events-none' : 'opacity-100'}`}>
+              {loading && contacts.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="text-center py-12 text-slate-400">
                     <RefreshCw className="w-4 h-4 animate-spin mx-auto mb-1 text-slate-600" />

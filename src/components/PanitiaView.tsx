@@ -61,8 +61,10 @@ export default function PanitiaView({
     }
   }, [signedInPanitia, activeWave]);
 
-  const fetchContacts = async (committeeId: number, wave: number) => {
-    setLoadingContacts(true);
+  const fetchContacts = async (committeeId: number, wave: number, silent = false) => {
+    if (!silent) {
+      setLoadingContacts(true);
+    }
     try {
       const res = await fetch(`/api/panitia/${committeeId}/contacts?wave=${wave}`);
       const data = await res.json();
@@ -74,7 +76,9 @@ export default function PanitiaView({
     } catch (err) {
       console.error('Error fetching contacts:', err);
     } finally {
-      setLoadingContacts(false);
+      if (!silent) {
+        setLoadingContacts(false);
+      }
     }
   };
 
@@ -119,13 +123,36 @@ export default function PanitiaView({
   };
 
   const updateStatus = async (recipientId: number, newStatus: string, currentNotes: string) => {
-    // Optimistic UI update
+    const targetContact = contacts.find(c => c.recipient_id === recipientId);
+    const oldStatus = targetContact?.status || 'Belum Terkirim';
+    if (oldStatus === newStatus) return;
+
+    // 1. Instant optimistic update on contacts
     setContacts(prev => prev.map(c => {
       if (c.recipient_id === recipientId) {
         return { ...c, status: newStatus };
       }
       return c;
     }));
+
+    // 2. Instant optimistic update on progress counters
+    setStats((prevStats: any) => {
+      if (!prevStats) return prevStats;
+      const newStats = { ...prevStats };
+      const mapKey = (s: string) => {
+        if (s === 'Konfirmasi Hadir') return 'hadir';
+        if (s === 'Konfirmasi Tidak Bisa Hadir') return 'tidak_hadir';
+        if (s === 'Terkirim Tidak Ada Respond') return 'no_respon';
+        if (s === 'Tidak Terkirim') return 'gagal';
+        return 'belum_kirim';
+      };
+
+      const oldKey = mapKey(oldStatus);
+      const newKey = mapKey(newStatus);
+      if (newStats[oldKey] !== undefined) newStats[oldKey] = Math.max(0, newStats[oldKey] - 1);
+      if (newStats[newKey] !== undefined) newStats[newKey] = (newStats[newKey] || 0) + 1;
+      return newStats;
+    });
 
     try {
       const res = await fetch(`/api/contacts/${recipientId}/status`, {
@@ -141,12 +168,14 @@ export default function PanitiaView({
       const data = await res.json();
       if (!data.success) {
         showToast(data.error || 'Gagal memperbarui status');
-        if (signedInPanitia) fetchContacts(signedInPanitia.id, activeWave);
+        if (signedInPanitia) fetchContacts(signedInPanitia.id, activeWave, true);
       } else {
-        if (signedInPanitia) fetchContacts(signedInPanitia.id, activeWave);
+        // Silent sync in background without loading flicker
+        if (signedInPanitia) fetchContacts(signedInPanitia.id, activeWave, true);
       }
     } catch (err) {
       console.error('Error updating status:', err);
+      if (signedInPanitia) fetchContacts(signedInPanitia.id, activeWave, true);
     }
   };
 
@@ -454,7 +483,7 @@ export default function PanitiaView({
             return (
               <div
                 key={contact.recipient_id}
-                className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 hover:border-slate-300 shadow-xs transition duration-150"
+                className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 hover:border-slate-300 shadow-xs transition-all duration-200 ease-out"
               >
                 {/* Header: Name, No Urut, Phone & Status Dropdown */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 border-b border-slate-100">
