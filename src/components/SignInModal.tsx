@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { X, User, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
 
 interface PanitiaMember {
@@ -21,6 +21,71 @@ export default function SignInModal({ isOpen, onClose, onSignIn }: SignInModalPr
   const [typedName, setTypedName] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [panitiaList, setPanitiaList] = useState<PanitiaMember[]>([]);
+
+  // Prefetch panitia on modal open for instant 0ms recognition
+  useEffect(() => {
+    if (isOpen && panitiaList.length === 0) {
+      fetch('/api/panitia')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.panitia) {
+            setPanitiaList(data.panitia);
+          }
+        })
+        .catch((err) => console.error('Failed to prefetch panitia:', err));
+    }
+  }, [isOpen, panitiaList.length]);
+
+  // Real-time smart matching based on First Name (since all 27 committee first names are unique)
+  const { detectedMatch, ambiguousList } = useMemo(() => {
+    const q = typedName.trim().toLowerCase();
+    if (!q || panitiaList.length === 0) {
+      return { detectedMatch: null, ambiguousList: [] };
+    }
+
+    // 1. Exact match on First Name (first word)
+    const firstNameExact = panitiaList.filter((p) => {
+      const firstName = p.name.trim().split(/\s+/)[0].toLowerCase();
+      return firstName === q;
+    });
+    if (firstNameExact.length === 1) {
+      return { detectedMatch: firstNameExact[0], ambiguousList: [] };
+    }
+
+    // 2. Exact match on Full Name
+    const fullNameExact = panitiaList.filter(
+      (p) => p.name.trim().toLowerCase() === q
+    );
+    if (fullNameExact.length === 1) {
+      return { detectedMatch: fullNameExact[0], ambiguousList: [] };
+    }
+
+    // 3. First name prefix match (if query is at least 2 chars)
+    if (q.length >= 2) {
+      const prefixMatches = panitiaList.filter((p) => {
+        const firstName = p.name.trim().split(/\s+/)[0].toLowerCase();
+        return firstName.startsWith(q);
+      });
+      if (prefixMatches.length === 1) {
+        return { detectedMatch: prefixMatches[0], ambiguousList: [] };
+      } else if (prefixMatches.length > 1) {
+        return { detectedMatch: null, ambiguousList: prefixMatches };
+      }
+    }
+
+    // 4. Fallback: full name contains query
+    const containsMatches = panitiaList.filter((p) =>
+      p.name.trim().toLowerCase().includes(q)
+    );
+    if (containsMatches.length === 1) {
+      return { detectedMatch: containsMatches[0], ambiguousList: [] };
+    } else if (containsMatches.length > 1) {
+      return { detectedMatch: null, ambiguousList: containsMatches };
+    }
+
+    return { detectedMatch: null, ambiguousList: [] };
+  }, [typedName, panitiaList]);
 
   if (!isOpen) return null;
 
@@ -28,7 +93,23 @@ export default function SignInModal({ isOpen, onClose, onSignIn }: SignInModalPr
     e.preventDefault();
     const queryName = typedName.trim().toLowerCase();
     if (!queryName) {
-      setErrorMessage('Silakan ketik nama Anda.');
+      setErrorMessage('Silakan ketik nama depan Anda.');
+      return;
+    }
+
+    // If already detected via live matching
+    if (detectedMatch) {
+      onSignIn(detectedMatch);
+      setTypedName('');
+      setErrorMessage(null);
+      onClose();
+      return;
+    }
+
+    // If ambiguous (e.g. typed "Nov" or "El")
+    if (ambiguousList.length > 1) {
+      const names = ambiguousList.map((p) => p.name.split(' ')[0]).join(', ');
+      setErrorMessage(`Ditemukan beberapa nama yang mirip: ${names}. Silakan ketik nama depan lebih lengkap.`);
       return;
     }
 
@@ -36,35 +117,43 @@ export default function SignInModal({ isOpen, onClose, onSignIn }: SignInModalPr
     setErrorMessage(null);
 
     try {
-      const res = await fetch('/api/panitia');
-      const data = await res.json();
-      if (!data.success) {
-        throw new Error(data.error || 'Gagal memuat data panitia.');
+      // If list wasn't preloaded, fetch fresh
+      let list = panitiaList;
+      if (list.length === 0) {
+        const res = await fetch('/api/panitia');
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Gagal memuat data panitia.');
+        list = data.panitia || [];
+        setPanitiaList(list);
       }
 
-      const panitiaList: PanitiaMember[] = data.panitia || [];
-
-      // Exact match (case insensitive)
-      let found = panitiaList.find(
-        (p) => p.name.trim().toLowerCase() === queryName
+      // 1. Exact match on First Name
+      let found = list.find(
+        (p) => p.name.trim().split(/\s+/)[0].toLowerCase() === queryName
       );
 
-      // If no exact match, try matching if input contains full name or vice versa with high confidence
+      // 2. Exact match on Full Name
       if (!found) {
-        const partialMatches = panitiaList.filter(
-          (p) =>
-            p.name.trim().toLowerCase().includes(queryName) ||
-            queryName.includes(p.name.trim().toLowerCase())
-        );
+        found = list.find((p) => p.name.trim().toLowerCase() === queryName);
+      }
 
-        if (partialMatches.length === 1) {
-          found = partialMatches[0];
-        } else if (partialMatches.length > 1) {
-          // Check if one starts with query
-          const exactPrefix = partialMatches.filter(p => p.name.trim().toLowerCase().startsWith(queryName));
-          if (exactPrefix.length === 1) {
-            found = exactPrefix[0];
-          }
+      // 3. Prefix on First Name
+      if (!found && queryName.length >= 2) {
+        const prefixMatches = list.filter((p) =>
+          p.name.trim().split(/\s+/)[0].toLowerCase().startsWith(queryName)
+        );
+        if (prefixMatches.length === 1) {
+          found = prefixMatches[0];
+        }
+      }
+
+      // 4. Contains
+      if (!found) {
+        const containsMatches = list.filter((p) =>
+          p.name.trim().toLowerCase().includes(queryName)
+        );
+        if (containsMatches.length === 1) {
+          found = containsMatches[0];
         }
       }
 
@@ -75,7 +164,7 @@ export default function SignInModal({ isOpen, onClose, onSignIn }: SignInModalPr
         onClose();
       } else {
         setErrorMessage(
-          `Nama "${typedName}" tidak ditemukan dalam daftar SK Panitia Natal PAKSU 2026. Pastikan penulisan nama lengkap sesuai SK.`
+          `Nama depan "${typedName}" tidak ditemukan dalam daftar 27 Panitia SK. Pastikan ejaan nama depan benar.`
         );
       }
     } catch (err: any) {
@@ -101,7 +190,7 @@ export default function SignInModal({ isOpen, onClose, onSignIn }: SignInModalPr
                 Sign In Panitia Natal
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Ketik nama Anda sesuai SK Panitia
+                Ketik nama depan Anda untuk akses tugas
               </p>
             </div>
           </div>
@@ -113,11 +202,11 @@ export default function SignInModal({ isOpen, onClose, onSignIn }: SignInModalPr
           </button>
         </div>
 
-        {/* Form Body - Pure Input Without Options */}
+        {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              Nama Lengkap (Sesuai SK)
+              Nama Depan Panitia
             </label>
             <div className="relative">
               <input
@@ -128,14 +217,43 @@ export default function SignInModal({ isOpen, onClose, onSignIn }: SignInModalPr
                   setTypedName(e.target.value);
                   if (errorMessage) setErrorMessage(null);
                 }}
-                placeholder="Contoh: Charlie Nainggolan"
+                placeholder="Contoh: Charlie, Novan, Vena, Della..."
                 className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-400 focus:bg-white transition"
               />
             </div>
             <p className="text-[11px] text-slate-400 mt-1.5">
-              Ketik nama lengkap Anda persis seperti yang tercantum pada SK.
+              Cukup ketik nama depan (atau nama lengkap). Sistem otomatis mencocokkan dengan SK.
             </p>
           </div>
+
+          {/* Real-time Match Success Banner */}
+          {detectedMatch && (
+            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs transition-all">
+              <div className="flex items-center gap-2.5">
+                <div className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                  ✓
+                </div>
+                <div>
+                  <div className="font-bold text-emerald-950">
+                    {detectedMatch.name}
+                  </div>
+                  <div className="text-[11px] text-emerald-700 font-medium">
+                    {detectedMatch.group_name} • Panitia Resmi SK
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Ambiguous Suggestions */}
+          {ambiguousList.length > 1 && !detectedMatch && (
+            <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 mt-0.5" />
+              <span>
+                Ada beberapa nama ({ambiguousList.map((p) => p.name.split(' ')[0]).join(', ')}). Lanjutkan ketik nama depan Anda.
+              </span>
+            </div>
+          )}
 
           {/* Error Message */}
           {errorMessage && (
@@ -152,7 +270,7 @@ export default function SignInModal({ isOpen, onClose, onSignIn }: SignInModalPr
               disabled={loading || !typedName.trim()}
               className="w-full py-3 px-4 bg-slate-900 hover:bg-slate-800 disabled:opacity-40 text-white text-sm font-bold rounded-xl shadow-xs transition flex items-center justify-center gap-2"
             >
-              <span>{loading ? 'Memeriksa SK...' : 'Masuk ke Portal'}</span>
+              <span>{loading ? 'Memeriksa...' : 'Masuk ke Portal'}</span>
               {!loading && <ArrowRight className="w-4 h-4" />}
             </button>
           </div>
