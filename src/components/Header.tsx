@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Send, BarChart3, Users, FileText, Image as ImageIcon, User, LogOut, ChevronRight } from 'lucide-react';
+import { Send, BarChart3, Users, FileText, Image as ImageIcon, User, LogOut, ChevronRight, BookOpen } from 'lucide-react';
 
 interface HeaderProps {
-  activeTab: 'panitia' | 'dashboard' | 'recipients' | 'templates';
-  setActiveTab: (tab: 'panitia' | 'dashboard' | 'recipients' | 'templates') => void;
+  activeTab: 'panitia' | 'dashboard' | 'recipients' | 'templates' | 'tutorial';
+  setActiveTab: (tab: 'panitia' | 'dashboard' | 'recipients' | 'templates' | 'tutorial') => void;
   signedInPanitia: { id: number; name: string; group_name: string } | null;
   onOpenSignIn: () => void;
   onSignOut: () => void;
@@ -132,6 +132,18 @@ export default function Header({
               <FileText className="w-4 h-4" />
               <span>Template WA</span>
             </button>
+
+            <button
+              onClick={() => setActiveTab('tutorial')}
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition ${
+                activeTab === 'tutorial'
+                  ? 'bg-slate-900 text-white'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <BookOpen className="w-4 h-4 text-amber-500" />
+              <span>Tutorial</span>
+            </button>
           </nav>
 
           {/* User Sign In Status */}
@@ -214,7 +226,7 @@ export default function Header({
 
         <button
           onClick={() => setActiveTab('templates')}
-          className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition ${
+          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition ${
             activeTab === 'templates'
               ? 'text-slate-900 font-bold'
               : 'text-slate-400 hover:text-slate-600 font-medium'
@@ -222,6 +234,18 @@ export default function Header({
         >
           <FileText className={`w-5 h-5 ${activeTab === 'templates' ? 'text-slate-900' : 'text-slate-400'}`} />
           <span className="text-[10px] mt-0.5">Template</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('tutorial')}
+          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition ${
+            activeTab === 'tutorial'
+              ? 'text-slate-900 font-bold'
+              : 'text-slate-400 hover:text-slate-600 font-medium'
+          }`}
+        >
+          <BookOpen className={`w-5 h-5 ${activeTab === 'tutorial' ? 'text-amber-500' : 'text-slate-400'}`} />
+          <span className="text-[10px] mt-0.5">Tutorial</span>
         </button>
       </nav>
     </>

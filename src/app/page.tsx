@@ -6,11 +6,12 @@ import PanitiaView from '../components/PanitiaView';
 import DashboardView from '../components/DashboardView';
 import RecipientsView from '../components/RecipientsView';
 import TemplateView from '../components/TemplateView';
+import TutorialView from '../components/TutorialView';
 import SignInModal from '../components/SignInModal';
 import FlyerModal from '../components/FlyerModal';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'panitia' | 'recipients' | 'templates'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'panitia' | 'recipients' | 'templates' | 'tutorial'>('dashboard');
   const [signedInPanitia, setSignedInPanitia] = useState<any>(null);
   const [isSignInOpen, setIsSignInOpen] = useState(false);
   const [isFlyerOpen, setIsFlyerOpen] = useState(false);
@@ -100,6 +101,20 @@ export default function Home() {
 
         <div className={activeTab === 'templates' ? 'block animate-fade-in' : 'hidden'}>
           <TemplateView />
+        </div>
+
+        <div className={activeTab === 'tutorial' ? 'block animate-fade-in' : 'hidden'}>
+          <TutorialView
+            onGoToPanitia={() => {
+              if (!signedInPanitia) {
+                setIsSignInOpen(true);
+              } else {
+                setActiveTab('panitia');
+              }
+            }}
+            onOpenSignIn={() => setIsSignInOpen(true)}
+            signedInPanitia={signedInPanitia}
+          />
         </div>
       </main>
 
